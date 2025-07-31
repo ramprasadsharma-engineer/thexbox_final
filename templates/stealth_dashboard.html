@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xbox Game Pass Ultimate Stealth | Anti-Rate-Limit Checker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2d3748;
+            --secondary-color: #4a5568;
+            --accent-color: #00d4aa;
+            --background-dark: #0a0e27;
+            --background-light: #1a1f3a;
+            --surface-color: #242852;
+            --text-primary: #ffffff;
+            --text-secondary: #b4bcd0;
+            --success-color: #00ff88;
+            --warning-color: #ffb800;
+            --error-color: #ff4757;
+            --xbox-green: #107c10;
+            --xbox-blue: #0078d4;
+            --gradient-xbox: linear-gradient(135deg, #107c10 0%, #0078d4 100%);
+            --shadow-xbox: 0 10px 30px rgba(16, 124, 16, 0.3);
+            --border-radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: var(--surface-color);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--xbox-green);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-xbox);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 124, 16, 0.1);
+            border: 1px solid var(--xbox-green);
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--xbox-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h2 i {
+            color: var(--xbox-green);
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(16, 124, 16, 0.3);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            background: rgba(16, 124, 16, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--xbox-green);
+            background: rgba(16, 124, 16, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--xbox-green);
+            background: rgba(16, 124, 16, 0.15);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--xbox-green);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .combo-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--background-dark);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .combo-textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--gradient-xbox);
+            color: white;
+            box-shadow: var(--shadow-xbox);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(16, 124, 16, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #5a6b7d;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-xbox);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-container {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .progress-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            font-size: 1.1rem;
+            color: var(--xbox-green);
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--background-dark);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-xbox);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .current-account {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .results-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .result-category {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .category-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .category-count {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .ultimate { color: #00ff88; }
+        .core { color: #0078d4; }
+        .pc-console { color: #ffb800; }
+        .free { color: #b4bcd0; }
+        .invalid { color: #ff4757; }
+        .errors { color: #ff6b6b; }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--gradient-xbox);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 124, 16, 0.3);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .session-info {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .session-id {
+            font-family: 'Fira Code', monospace;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .session-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--xbox-green);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: var(--success-color);
+        }
+
+        .notification.error {
+            background: var(--error-color);
+        }
+
+        .notification.warning {
+            background: var(--warning-color);
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .results-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fab fa-xbox"></i>
+                <div class="logo-text">
+                    <div class="logo-title">Xbox Game Pass Ultimate</div>
+                    <div class="logo-subtitle">Stealth Validator v3.0.0</div>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Ultra-Stealth Mode</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Session Info -->
+        <div class="session-info">
+            <div class="session-id">Session ID: <span id="session-id">Connecting...</span></div>
+            <div class="session-status">
+                <i class="fas fa-circle ultimate"></i>
+                <span id="session-status">Initializing stealth mode...</span>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="grid">
+            <div class="card">
+                <h2><i class="fas fa-upload"></i> Upload Account List</h2>
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">Drop your account list here</div>
+                    <div class="upload-hint">or click to browse (TXT, CSV files)</div>
+                </div>
+                <input type="file" id="file-input" accept=".txt,.csv" />
+                
+                <textarea 
+                    id="combo-textarea" 
+                    class="combo-textarea" 
+                    placeholder="Or paste accounts here (email:password format)...&#10;example@xbox.com:password123&#10;user@outlook.com:mypassword"
+                ></textarea>
+                
+                <div class="controls">
+                    <button id="start-btn" class="btn btn-primary">
+                        <i class="fas fa-play"></i>
+                        Start Stealth Check
+                    </button>
+                    <button id="pause-btn" class="btn btn-secondary hidden">
+                        <i class="fas fa-pause"></i>
+                        Pause
+                    </button>
+                    <button id="stop-btn" class="btn btn-secondary hidden">
+                        <i class="fas fa-stop"></i>
+                        Stop
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-chart-line"></i> Live Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value ultimate" id="ultimate-count">0</div>
+                        <div class="stat-label">Ultimate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value core" id="core-count">0</div>
+                        <div class="stat-label">Core</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value pc-console" id="pc-console-count">0</div>
+                        <div class="stat-label">PC/Console</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value free" id="free-count">0</div>
+                        <div class="stat-label">Free</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value invalid" id="invalid-count">0</div>
+                        <div class="stat-label">Invalid</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value errors" id="error-count">0</div>
+                        <div class="stat-label">Errors</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-container">
+            <div class="progress-header">
+                <div class="progress-title">Validation Progress</div>
+                <div class="progress-percentage" id="progress-percentage">0%</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="current-account" id="current-account">Ready to start...</div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section">
+            <div class="result-category">
+                <div class="category-header">
+                    <div class="category-title">
+                        <i class="fas fa-crown ultimate"></i>
+                        <span>Ultimate Accounts</span>
+                    </div>
+                    <div class="category-count ultimate" id="ultimate-display">0</div>
+                </div>
+                <button class="download-btn" id="download-ultimate" disabled>
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+
+            <div class="result-category">
+                <div class="category-header">
+                    <div class="category-title">
+                        <i class="fas fa-gamepad core"></i>
+                        <span>Core Accounts</span>
+                    </div>
+                    <div class="category-count core" id="core-display">0</div>
+                </div>
+                <button class="download-btn" id="download-core" disabled>
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+
+            <div class="result-category">
+                <div class="category-header">
+                    <div class="category-title">
+                        <i class="fas fa-desktop pc-console"></i>
+                        <span>PC/Console Only</span>
+                    </div>
+                    <div class="category-count pc-console" id="pc-console-display">0</div>
+                </div>
+                <button class="download-btn" id="download-pc-console" disabled>
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+
+            <div class="result-category">
+                <div class="category-header">
+                    <div class="category-title">
+                        <i class="fas fa-user free"></i>
+                        <span>Free Accounts</span>
+                    </div>
+                    <div class="category-count free" id="free-display">0</div>
+                </div>
+                <button class="download-btn" id="download-free" disabled>
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+
+            <div class="result-category">
+                <div class="category-header">
+                    <div class="category-title">
+                        <i class="fas fa-times-circle invalid"></i>
+                        <span>Invalid Accounts</span>
+                    </div>
+                    <div class="category-count invalid" id="invalid-display">0</div>
+                </div>
+                <button class="download-btn" id="download-invalid" disabled>
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+
+            <div class="result-category">
+                <div class="category-header">
+                    <div class="category-title">
+                        <i class="fas fa-exclamation-triangle errors"></i>
+                        <span>Errors</span>
+                    </div>
+                    <div class="category-count errors" id="error-display">0</div>
+                </div>
+                <button class="download-btn" id="download-errors" disabled>
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+
+        <!-- Download All -->
+        <div style="text-align: center; margin-top: 2rem;">
+            <button id="download-all" class="btn btn-primary" disabled>
+                <i class="fas fa-download"></i>
+                Download All Results
+            </button>
+        </div>
+    </div>
+
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+        let currentSessionId = null;
+        let isChecking = false;
+
+        // DOM Elements
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const comboTextarea = document.getElementById('combo-textarea');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const stopBtn = document.getElementById('stop-btn');
+
+        // Statistics elements
+        const ultimateCount = document.getElementById('ultimate-count');
+        const coreCount = document.getElementById('core-count');
+        const pcConsoleCount = document.getElementById('pc-console-count');
+        const freeCount = document.getElementById('free-count');
+        const invalidCount = document.getElementById('invalid-count');
+        const errorCount = document.getElementById('error-count');
+
+        // Progress elements
+        const progressFill = document.getElementById('progress-fill');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const currentAccount = document.getElementById('current-account');
+
+        // Session elements
+        const sessionId = document.getElementById('session-id');
+        const sessionStatus = document.getElementById('session-status');
+
+        // Download buttons
+        const downloadButtons = {
+            ultimate: document.getElementById('download-ultimate'),
+            core: document.getElementById('download-core'),
+            pcConsole: document.getElementById('download-pc-console'),
+            free: document.getElementById('download-free'),
+            invalid: document.getElementById('download-invalid'),
+            errors: document.getElementById('download-errors'),
+            all: document.getElementById('download-all')
+        };
+
+        // Socket Events
+        socket.on('connect', () => {
+            console.log('🎮 Connected to Xbox Stealth Server');
+            showNotification('Connected to stealth server', 'success');
+        });
+
+        socket.on('stealth_session_initialized', (data) => {
+            currentSessionId = data.session_id;
+            sessionId.textContent = data.session_id;
+            sessionStatus.innerHTML = '<i class="fas fa-circle ultimate"></i> Ready for validation';
+            console.log('🎮 Stealth session initialized:', data);
+        });
+
+        socket.on('stealth_check_started', (data) => {
+            isChecking = true;
+            updateButtonStates();
+            sessionStatus.innerHTML = '<i class="fas fa-circle ultimate"></i> Stealth validation running...';
+            currentAccount.textContent = `Processing ${data.total_accounts} accounts...`;
+            showNotification(`Started validation of ${data.total_accounts} accounts`, 'success');
+        });
+
+        socket.on('progress_update', (data) => {
+            if (data.session_id === currentSessionId) {
+                const percentage = ((data.checked / data.total) * 100).toFixed(1);
+                progressFill.style.width = percentage + '%';
+                progressPercentage.textContent = percentage + '%';
+                currentAccount.textContent = `Checking: ${data.current_account}`;
+            }
+        });
+
+        socket.on('stats_update', (data) => {
+            if (data.session_id === currentSessionId) {
+                updateStatistics(data);
+                updateDownloadButtons(data);
+            }
+        });
+
+        socket.on('stealth_check_completed', (data) => {
+            isChecking = false;
+            updateButtonStates();
+            sessionStatus.innerHTML = '<i class="fas fa-circle ultimate"></i> Validation completed';
+            currentAccount.textContent = 'Validation completed!';
+            
+            const message = `Validation completed! Found ${data.ultimate} Ultimate, ${data.core} Core, ${data.pc_console} PC/Console accounts`;
+            showNotification(message, 'success');
+        });
+
+        socket.on('stealth_check_paused', (data) => {
+            sessionStatus.innerHTML = '<i class="fas fa-circle warning"></i> Validation paused';
+            showNotification('Validation paused', 'warning');
+        });
+
+        socket.on('stealth_check_stopped', (data) => {
+            isChecking = false;
+            updateButtonStates();
+            sessionStatus.innerHTML = '<i class="fas fa-circle invalid"></i> Validation stopped';
+            showNotification('Validation stopped', 'warning');
+        });
+
+        socket.on('error', (data) => {
+            console.error('Error:', data.message);
+            showNotification(data.message, 'error');
+        });
+
+        // File Upload Handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                comboTextarea.value = e.target.result;
+                showNotification(`Loaded ${file.name}`, 'success');
+            };
+            reader.readAsText(file);
+        }
+
+        // Control Functions
+        startBtn.addEventListener('click', startValidation);
+        pauseBtn.addEventListener('click', pauseValidation);
+        stopBtn.addEventListener('click', stopValidation);
+
+        function startValidation() {
+            const comboContent = comboTextarea.value.trim();
+            if (!comboContent) {
+                showNotification('Please provide account combinations', 'error');
+                return;
+            }
+
+            if (!currentSessionId) {
+                showNotification('Session not initialized', 'error');
+                return;
+            }
+
+            socket.emit('start_stealth_check', {
+                session_id: currentSessionId,
+                combo_content: comboContent
+            });
+        }
+
+        function pauseValidation() {
+            socket.emit('pause_stealth_check', {
+                session_id: currentSessionId
+            });
+        }
+
+        function stopValidation() {
+            socket.emit('stop_stealth_check', {
+                session_id: currentSessionId
+            });
+        }
+
+        function updateButtonStates() {
+            if (isChecking) {
+                startBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+                stopBtn.classList.remove('hidden');
+            } else {
+                startBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+                stopBtn.classList.add('hidden');
+            }
+        }
+
+        function updateStatistics(data) {
+            ultimateCount.textContent = data.ultimate || 0;
+            coreCount.textContent = data.core || 0;
+            pcConsoleCount.textContent = data.pc_console || 0;
+            freeCount.textContent = data.free || 0;
+            invalidCount.textContent = data.invalid || 0;
+            errorCount.textContent = data.errors || 0;
+
+            // Update display counts
+            document.getElementById('ultimate-display').textContent = data.ultimate || 0;
+            document.getElementById('core-display').textContent = data.core || 0;
+            document.getElementById('pc-console-display').textContent = data.pc_console || 0;
+            document.getElementById('free-display').textContent = data.free || 0;
+            document.getElementById('invalid-display').textContent = data.invalid || 0;
+            document.getElementById('error-display').textContent = data.errors || 0;
+        }
+
+        function updateDownloadButtons(data) {
+            downloadButtons.ultimate.disabled = (data.ultimate || 0) === 0;
+            downloadButtons.core.disabled = (data.core || 0) === 0;
+            downloadButtons.pcConsole.disabled = (data.pc_console || 0) === 0;
+            downloadButtons.free.disabled = (data.free || 0) === 0;
+            downloadButtons.invalid.disabled = (data.invalid || 0) === 0;
+            downloadButtons.errors.disabled = (data.errors || 0) === 0;
+            downloadButtons.all.disabled = (data.checked || 0) === 0;
+        }
+
+        // Download Functions
+        downloadButtons.ultimate.addEventListener('click', () => downloadFile('ultimate'));
+        downloadButtons.core.addEventListener('click', () => downloadFile('core'));
+        downloadButtons.pcConsole.addEventListener('click', () => downloadFile('pc_console'));
+        downloadButtons.free.addEventListener('click', () => downloadFile('free'));
+        downloadButtons.invalid.addEventListener('click', () => downloadFile('invalid'));
+        downloadButtons.errors.addEventListener('click', () => downloadFile('errors'));
+        downloadButtons.all.addEventListener('click', () => downloadFile('all'));
+
+        function downloadFile(fileType) {
+            if (!currentSessionId) {
+                showNotification('No active session', 'error');
+                return;
+            }
+
+            const url = `/api/stealth/download/${currentSessionId}/${fileType}`;
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // Initialize
+        console.log('🎮 Xbox Game Pass Ultimate Stealth Validator v3.0.0 loaded');
+    </script>
+</body>
+</html>
