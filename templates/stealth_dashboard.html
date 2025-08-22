@@ -186,6 +186,133 @@
             color: var(--text-secondary);
         }
 
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .upload-area {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Enhanced progress indicators */
+        .progress-container {
+            background: var(--background-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-xbox);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Enhanced status indicators */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .status-item {
+            background: var(--surface-color);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--xbox-green);
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Enhanced notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--surface-color);
+            border: 1px solid var(--xbox-green);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: var(--success-color);
+        }
+
+        .notification.warning {
+            border-color: var(--warning-color);
+        }
+
+        .notification.error {
+            border-color: var(--error-color);
+        }
+
         #file-input {
             display: none;
         }
@@ -840,6 +967,137 @@
             showNotification(data.message, 'error');
         });
 
+        socket.on('warning', (data) => {
+            console.warn('Warning:', data.message);
+            showNotification(data.message, 'warning');
+        });
+
+        // Enhanced notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Enhanced progress tracking
+        let progressHistory = [];
+        function updateProgressHistory(percentage, timestamp) {
+            progressHistory.push({ percentage, timestamp });
+            if (progressHistory.length > 100) {
+                progressHistory.shift();
+            }
+        }
+
+        // Enhanced statistics display
+        function updateStatistics(data) {
+            // Update counts with animation
+            animateCount(ultimateCount, data.ultimate || 0);
+            animateCount(coreCount, data.core || 0);
+            animateCount(pcConsoleCount, data.pc_console || 0);
+            animateCount(freeCount, data.free || 0);
+            animateCount(invalidCount, data.invalid || 0);
+            animateCount(errorCount, data.errors || 0);
+            
+            // Update progress
+            if (data.total && data.checked !== undefined) {
+                const percentage = ((data.checked / data.total) * 100).toFixed(1);
+                progressFill.style.width = percentage + '%';
+                progressPercentage.textContent = percentage + '%';
+                updateProgressHistory(percentage, Date.now());
+            }
+        }
+
+        // Smooth count animation
+        function animateCount(element, targetValue) {
+            if (!element) return;
+            
+            const startValue = parseInt(element.textContent) || 0;
+            const duration = 500;
+            const startTime = Date.now();
+            
+            function updateCount() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
+                
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateCount);
+                }
+            }
+            
+            updateCount();
+        }
+
+        // Enhanced download button management
+        function updateDownloadButtons(data) {
+            const hasResults = (data.ultimate || 0) + (data.core || 0) + (data.pc_console || 0) + (data.free || 0) + (data.invalid || 0) > 0;
+            
+            Object.values(downloadButtons).forEach(btn => {
+                if (btn) {
+                    btn.disabled = !hasResults;
+                }
+            });
+        }
+
+        // Enhanced file handling
+        function handleFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                comboTextarea.value = e.target.result;
+                showNotification(`File loaded: ${file.name}`, 'success');
+            };
+            reader.readAsText(file);
+        }
+
+        // Enhanced drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        // Enhanced click handling
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
         // File Upload Handling
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', handleDragOver);
@@ -993,8 +1251,126 @@
             }, 3000);
         }
 
-        // Initialize
-        console.log('🎮 Xbox Game Pass Ultimate Stealth Validator v3.0.0 loaded');
+        // Enhanced session management
+        function refreshSessionInfo() {
+            if (currentSessionId) {
+                fetch(`/api/stealth/sessions`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Session info refreshed:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error refreshing session info:', error);
+                    });
+            }
+        }
+
+        // Enhanced health monitoring
+        function checkServerHealth() {
+            fetch('/api/stealth/health')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.system_metrics) {
+                        console.log('Server health:', data.system_metrics);
+                    }
+                })
+                .catch(error => {
+                    console.error('Health check failed:', error);
+                });
+        }
+
+        // Enhanced error handling
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            showNotification('An error occurred', 'error');
+        });
+
+        // Enhanced performance monitoring
+        let performanceMetrics = {
+            startTime: Date.now(),
+            requests: 0,
+            errors: 0
+        };
+
+        function logPerformance(action) {
+            performanceMetrics.requests++;
+            console.log(`Performance: ${action} - Total requests: ${performanceMetrics.requests}`);
+        }
+
+        // Enhanced cleanup
+        function cleanupSession() {
+            if (currentSessionId) {
+                fetch(`/api/stealth/cleanup/${currentSessionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        showNotification('Session cleaned up', 'success');
+                        currentSessionId = null;
+                        resetUI();
+                    })
+                    .catch(error => {
+                        console.error('Cleanup failed:', error);
+                        showNotification('Cleanup failed', 'error');
+                    });
+            }
+        }
+
+        function resetUI() {
+            // Reset all counters
+            Object.values(downloadButtons).forEach(btn => btn.disabled = true);
+            progressFill.style.width = '0%';
+            progressPercentage.textContent = '0%';
+            currentAccount.textContent = 'Ready for validation';
+            sessionStatus.innerHTML = '<i class="fas fa-circle ultimate"></i> Ready for validation';
+            
+            // Reset statistics
+            [ultimateCount, coreCount, pcConsoleCount, freeCount, invalidCount, errorCount].forEach(el => {
+                if (el) el.textContent = '0';
+            });
+            
+            // Reset display counts
+            ['ultimate-display', 'core-display', 'pc-console-display', 'free-display', 'invalid-display', 'error-display'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '0';
+            });
+        }
+
+        // Enhanced keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        if (startBtn && !startBtn.disabled) startValidation();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        if (pauseBtn && !pauseBtn.disabled) pauseValidation();
+                        break;
+                    case 'x':
+                        e.preventDefault();
+                        if (stopBtn && !stopBtn.disabled) stopValidation();
+                        break;
+                }
+            }
+        });
+
+        // Enhanced periodic updates
+        setInterval(() => {
+            if (currentSessionId) {
+                refreshSessionInfo();
+                checkServerHealth();
+            }
+        }, 30000); // Every 30 seconds
+
+        // Initialize enhanced features
+        console.log('🎮 Xbox Game Pass Ultimate Stealth Validator v3.1.0 Enhanced Edition loaded');
+        console.log('🚀 Features: Enhanced security, rate limiting, session management, mobile responsive');
+        console.log('⌨️ Shortcuts: Ctrl+S (Start), Ctrl+P (Pause), Ctrl+X (Stop)');
+        
+        // Show welcome notification
+        setTimeout(() => {
+            showNotification('Enhanced Stealth Validator v3.1.0 loaded successfully!', 'success');
+        }, 1000);
     </script>
 </body>
 </html>
